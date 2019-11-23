@@ -13,6 +13,7 @@ repositories {
 dependencies {
     implementation("org.scala-lang:scala-library:2.13.1")
     implementation("org.scala-lang:scala-reflect:2.13.1")
+    // TODO: apply to map AWS Java futures to Scala future
     implementation("org.scala-lang.modules:scala-java8-compat_2.13:0.9.0")
 
     implementation("com.typesafe.akka:akka-actor_2.13:2.6.0")

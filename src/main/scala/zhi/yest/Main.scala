@@ -9,7 +9,6 @@ import software.amazon.awssdk.services.sns.SnsAsyncClient
 import zhi.yest.aws.sns.SnsTopicService
 import zhi.yest.vk.methods.{Rules, Streaming}
 
-
 object Main {
   def main(args: Array[String]): Unit = {
     val snsClient = SnsAsyncClient.builder()
