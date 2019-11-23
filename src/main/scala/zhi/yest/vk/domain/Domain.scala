@@ -1,3 +1,3 @@
 package zhi.yest.vk.domain
 
-case class Rule(value: String, tags: Array[String])
+case class Rule(value: String, tag: String)
