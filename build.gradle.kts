@@ -17,6 +17,8 @@ dependencies {
     implementation("com.typesafe.akka:akka-actor_2.13:2.6.0")
     implementation("com.typesafe.akka:akka-stream_2.13:2.6.0")
     implementation("com.typesafe.akka:akka-http_2.13:10.1.10")
+    implementation("com.typesafe.akka:akka-stream-kafka_2.13:1.1.0")
+
     // TODO: remove and replace by akka streams
     implementation("org.apache.httpcomponents:httpclient:4.5.10")
     implementation("com.google.code.gson:gson:2.8.6")
@@ -26,7 +28,7 @@ dependencies {
 tasks {
     shadowJar {
         manifest {
-            attributes("Main-Class" to "Main")
+            attributes("Main-Class" to "zhi.yest.Main")
         }
     }
     build {

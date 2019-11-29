@@ -1,9 +1,10 @@
 package zhi.yest.vk.methods
 
-import akka.Done
+import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
+import akka.stream.{Graph, SinkShape}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import zhi.yest.vk.dto.{StreamingResponse, StreamingResponseDto}
 
@@ -25,21 +26,18 @@ final class Streaming extends BaseMethod {
     getResponse(response, classOf[StreamingResponseDto])
   }
 
-  def openConnection(sink: Sink[Message, Future[Done]])
+  def openConnection(sink: Graph[SinkShape[Message], Future[Done]])
                     (implicit actorSystem: ActorSystem): Promise[Option[Message]] = {
     import actorSystem.dispatcher
 
-    val flow: Flow[Message, Message, Promise[Option[Message]]] =
-      Flow.fromSinkAndSourceMat(
-        sink,
-        Source.maybe[Message])(Keep.right)
+    val flow = Flow.fromSinkAndSourceMat(sink, Source.maybe[Message])(Keep.right)
 
     val (upgradeResponse, promise) =
       Http().singleWebSocketRequest(
         WebSocketRequest(s"wss://${streamingResponse.endpoint}/stream?key=${streamingResponse.key}"),
         flow)
 
-    upgradeResponse.onComplete(println)
+    upgradeResponse.onComplete(_ => println("Websocket connection established."))
 
     promise
   }
