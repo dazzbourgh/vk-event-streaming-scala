@@ -1,6 +1,7 @@
 plugins {
     scala
     id("com.github.johnrengelman.shadow") version "5.1.0"
+    id("application")
 }
 
 group = "zhi.yest"
@@ -33,5 +34,8 @@ tasks {
     }
     build {
         dependsOn(shadowJar)
+    }
+    application {
+        mainClassName = "zhi.yest.Main"
     }
 }
