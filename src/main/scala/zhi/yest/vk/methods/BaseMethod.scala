@@ -7,7 +7,7 @@ import org.apache.http.client.utils.URIBuilder
 import org.apache.http.entity.BasicHttpEntity
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClients}
 import org.apache.http.util.EntityUtils
-import zhi.yest.vk.config.Config.config
+import zhi.yest.vk.config.Configuration.config
 
 import scala.util.Using
 
