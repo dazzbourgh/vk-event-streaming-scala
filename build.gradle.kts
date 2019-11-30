@@ -19,6 +19,7 @@ dependencies {
     implementation("com.typesafe.akka:akka-actor_2.13:2.6.0")
     implementation("com.typesafe.akka:akka-stream_2.13:2.6.0")
     implementation("com.typesafe.akka:akka-http_2.13:10.1.10")
+    implementation("com.typesafe.akka:akka-stream-kafka_2.13:1.1.0")
 
     implementation("software.amazon.awssdk:aws-sdk-java:2.10.22")
 
