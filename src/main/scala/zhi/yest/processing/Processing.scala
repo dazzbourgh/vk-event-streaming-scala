@@ -33,8 +33,9 @@ object Processing {
       result
     }
 
+    val minute = FiniteDuration(1, TimeUnit.MINUTES)
     Flow.fromSinkAndSource(Sink.foreach(_ => eventCount += 1),
-      Source.repeat(None).throttle(1, FiniteDuration(1, TimeUnit.MINUTES)).map(_ => rateDto))
+      Source.tick(minute, minute, None).map(_ => rateDto))
   }
 
   def awsEventSink = {
