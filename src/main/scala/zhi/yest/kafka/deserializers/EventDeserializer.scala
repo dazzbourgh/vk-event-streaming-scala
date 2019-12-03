@@ -5,7 +5,7 @@ import java.util
 import com.google.gson.Gson
 import org.apache.commons.codec.binary.StringUtils
 import org.apache.kafka.common.serialization.Deserializer
-import zhi.yest.vk.dto.EventCodeResponseDto
+import zhi.yest.dto.EventCodeResponseDto
 
 class EventDeserializer extends Deserializer[EventCodeResponseDto] {
   override def configure(configs: util.Map[String, _], isKey: Boolean): Unit = {

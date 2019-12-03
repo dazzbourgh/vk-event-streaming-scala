@@ -1,38 +1,29 @@
 package zhi.yest
 
-import java.time.LocalTime
-import java.time.temporal.ChronoUnit
-
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.SinkShape
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Keep, Sink}
+import akka.stream.scaladsl.{Broadcast, GraphDSL, Keep, Merge, Sink}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zhi.yest.aws.sns.SnsTopicService
-import zhi.yest.kafka.Kafka
-import zhi.yest.vk.dto.EventCodeResponseDto
+import zhi.yest.dto.{EventCodeResponseDto, TimeEvent}
+import zhi.yest.processing.Kafka
+import zhi.yest.processing.Processing._
 import zhi.yest.vk.methods.Streaming
 
 import scala.concurrent.Future
 import scala.io.StdIn
 
-// TODO: create additional source for timer events
 object Main {
   def main(args: Array[String]): Unit = {
     implicit val actorSystem: ActorSystem = ActorSystem()
     val streaming = Streaming()
-    val snsEventService = SnsTopicService()
 
-    val processingGraph = buildProducerGraph(Kafka.messageFlow.toMat(Kafka.sink)(Keep.right))(Sink.foreach(println))
-    val consumerGraph = Kafka.source.to(
-      buildConsumerGraph(
-        Sink.foreach[ConsumerRecord[String, EventCodeResponseDto]](event => snsEventService.publish(event.value())),
-        rateSink { eventCount => println(s"${LocalTime.now()}: $eventCount events per second.") }
-      ))
+    val producerGraph = buildProducerGraph(Kafka.messageFlow.toMat(Kafka.sink)(Keep.right))(Sink.foreach(println))
+    val consumerClosedGraph = Kafka.source.to(consumerSink)
 
-    val completeStreaming = streaming.openConnection(processingGraph)
-    consumerGraph.run()
+    val completeStreaming = streaming.openConnection(producerGraph)
+    consumerClosedGraph.run()
 
     println("Press any key to stop the program.")
     StdIn.readLine()
@@ -42,31 +33,26 @@ object Main {
     actorSystem.terminate()
   }
 
-  private def rateSink(persist: Float => Unit) = {
-    val startTime = LocalTime.now()
-    var eventCount = 0
-    Flow[Any].map(_ => 1).to(
-      Sink.foreach {
-        _ => {
-          eventCount += 1
-          val currentTime = LocalTime.now()
-          val diff = startTime.until(currentTime, ChronoUnit.SECONDS)
-          persist(eventCount / diff)
-        }
-      })
-  }
-
-  private def buildConsumerGraph(sinks: Sink[ConsumerRecord[String, EventCodeResponseDto], Any]*) = {
-    val size = sinks.length
+  private def consumerSink = {
     GraphDSL.create() { implicit builder =>
       import GraphDSL.Implicits._
-      val B = builder.add(Broadcast[ConsumerRecord[String, EventCodeResponseDto]](size))
+      val FAN_OUT = builder.add(Broadcast[ConsumerRecord[String, EventCodeResponseDto]](2))
+      val FAN_IN = builder.add(Merge[TimeEvent](2))
 
-      for (i <- 0 until size) {
-        B.out(i) ~> sinks(i)
-      }
+      val TICK_SOURCE = builder.add(tickSource).out
+      val RECORD_TO_EVENT = builder.add(recordToEvent)
+      val TO_TIMER_TICK_EVENT = builder.add(toTimerTickEvent)
+      val TO_TIMER_VK_EVENT = builder.add(toTimerVkEvent)
+      val TO_RATE_DTO = builder.add(toRateDto)
+      val AWS_EVENT_SINK = builder.add(awsEventSink)
+      val AWS_RATE_SINK = builder.add(awsRateSink)
 
-      SinkShape(B.in)
+      FAN_OUT.out(0) ~> TO_TIMER_VK_EVENT ~> FAN_IN.in(0)
+      TICK_SOURCE ~> TO_TIMER_TICK_EVENT ~> FAN_IN.in(1)
+      FAN_IN.out ~> TO_RATE_DTO ~> AWS_RATE_SINK
+      FAN_OUT.out(1) ~> RECORD_TO_EVENT ~> AWS_EVENT_SINK
+
+      SinkShape(FAN_OUT.in)
     }
   }
 

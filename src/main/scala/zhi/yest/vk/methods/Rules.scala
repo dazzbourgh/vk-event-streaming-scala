@@ -1,7 +1,7 @@
 package zhi.yest.vk.methods
 
+import zhi.yest.dto.{RuleCodeResponseDto, RuleDto, RulesCodeResponseDto, StreamingResponse}
 import zhi.yest.vk.domain.Rule
-import zhi.yest.vk.dto.{RuleCodeResponseDto, RuleDto, RulesCodeResponseDto, StreamingResponse}
 
 final class Rules(private val streamingEndpoint: String,
             private val key: String) extends BaseMethod {

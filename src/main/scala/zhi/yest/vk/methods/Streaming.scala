@@ -1,12 +1,12 @@
 package zhi.yest.vk.methods
 
-import akka.{Done, NotUsed}
+import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ws.{Message, WebSocketRequest}
+import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.stream.{Graph, SinkShape}
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import zhi.yest.vk.dto.{StreamingResponse, StreamingResponseDto}
+import zhi.yest.dto.{StreamingResponse, StreamingResponseDto}
 
 import scala.concurrent.{Future, Promise}
 

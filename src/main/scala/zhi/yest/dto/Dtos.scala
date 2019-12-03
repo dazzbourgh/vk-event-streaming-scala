@@ -1,8 +1,10 @@
-package zhi.yest.vk.dto
+package zhi.yest.dto
+
+import java.time.LocalTime
 
 import com.google.gson.annotations.SerializedName
+import zhi.yest.dto.DtoHelper.Alias
 import zhi.yest.vk.domain.Rule
-import zhi.yest.vk.dto.DtoHelper.Alias
 
 import scala.annotation.meta.{field, getter, setter}
 
@@ -37,3 +39,11 @@ case class Event(action: String,
                  text: String)
 
 case class EventCodeResponseDto(code: Int, event: Event)
+
+case class RateDto(from: Long, to: Long, rate: Float)
+
+sealed abstract class TimeEvent()
+
+final case class TickEvent(from: LocalTime, to: LocalTime) extends TimeEvent
+
+final case class VkEvent() extends TimeEvent

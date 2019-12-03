@@ -7,17 +7,16 @@ import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsPro
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.sns.SnsAsyncClient
 import software.amazon.awssdk.services.sns.model.{PublishRequest, PublishResponse}
+import zhi.yest.aws.sns.SnsTopicService.snsClient
 import zhi.yest.vk.config.Configuration.config
-import zhi.yest.vk.dto.EventCodeResponseDto
 
 trait SnsTopicPublisher[T] {
   def publish(message: T): CompletableFuture[PublishResponse]
 }
 
-class SnsTopicService(private val snsClient: SnsAsyncClient,
-                      private val topicArn: String = config.getString("aws.sns.topic-arn"))
-  extends SnsTopicPublisher[EventCodeResponseDto] {
-  override def publish(message: EventCodeResponseDto): CompletableFuture[PublishResponse] = {
+class SnsTopicService[T](private val topicArn: String = config.getString("aws.sns.topic-arn"))
+  extends SnsTopicPublisher[T] {
+  override def publish(message: T): CompletableFuture[PublishResponse] = {
     val publishRequest = PublishRequest.builder()
       .message(new Gson().toJson(message))
       .topicArn(topicArn)
@@ -27,11 +26,14 @@ class SnsTopicService(private val snsClient: SnsAsyncClient,
 }
 
 object SnsTopicService {
-  def apply(): SnsTopicService = {
-    val snsClient = SnsAsyncClient.builder()
-      .region(Region.US_WEST_1)
-      .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
-      .build()
-    new SnsTopicService(snsClient)
+  private val snsClient = SnsAsyncClient.builder()
+    .region(Region.US_WEST_1)
+    .credentialsProvider(EnvironmentVariableCredentialsProvider.create())
+    .build()
+
+  def apply[T](topicArn: String): SnsTopicService[T] = new SnsTopicService(topicArn)
+
+  def apply[T](): SnsTopicService[T] = {
+    new SnsTopicService()
   }
 }

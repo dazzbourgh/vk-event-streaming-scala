@@ -28,6 +28,9 @@ dependencies {
     implementation("org.apache.httpcomponents:httpclient:4.5.10")
     implementation("com.google.code.gson:gson:2.8.6")
     implementation("commons-io:commons-io:2.6")
+
+    implementation("org.slf4j:slf4j-simple:2.0.0-alpha1")
+    implementation("com.typesafe.akka:akka-slf4j_2.13:2.6.0")
 }
 
 tasks {

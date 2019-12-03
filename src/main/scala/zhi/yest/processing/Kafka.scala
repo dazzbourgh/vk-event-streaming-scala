@@ -1,4 +1,4 @@
-package zhi.yest.kafka
+package zhi.yest.processing
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.{Message, TextMessage}
@@ -9,9 +9,9 @@ import akka.{Done, NotUsed}
 import org.apache.kafka.clients.consumer.{ConsumerConfig, ConsumerRecord}
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{StringDeserializer, StringSerializer}
+import zhi.yest.dto.EventCodeResponseDto
 import zhi.yest.kafka.deserializers.EventDeserializer
 import zhi.yest.vk.config.Configuration
-import zhi.yest.vk.dto.EventCodeResponseDto
 
 import scala.concurrent.Future
 
