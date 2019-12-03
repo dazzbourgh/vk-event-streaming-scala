@@ -40,7 +40,7 @@ case class Event(action: String,
 
 case class EventCodeResponseDto(code: Int, event: Event)
 
-case class RateDto(from: Long, to: Long, rate: Float)
+case class RateDto(from: Long, to: Long, events: Int)
 
 sealed abstract class TimeEvent()
 

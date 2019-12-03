@@ -1,6 +1,5 @@
 package zhi.yest.processing
 
-import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, LocalTime, ZoneOffset}
 import java.util.concurrent.TimeUnit
 
@@ -13,43 +12,29 @@ import zhi.yest.dto._
 import scala.concurrent.duration.FiniteDuration
 
 object Processing {
-  def tickSource = {
-    val minute = FiniteDuration(1, TimeUnit.MINUTES)
-    Source.tick(minute, minute, true)
-  }
-
-  def toTimerTickEvent: Flow[Boolean, TickEvent, NotUsed] = {
-    Flow[Boolean].map(_ => TickEvent(LocalTime.now()
-      .minus(1, ChronoUnit.MINUTES), LocalTime.now()))
-  }
-
-  def toTimerVkEvent: Flow[ConsumerRecord[String, EventCodeResponseDto], VkEvent, NotUsed] = {
-    Flow[ConsumerRecord[String, EventCodeResponseDto]].map(_ => VkEvent())
-  }
-
-  def recordToEvent = {
+  def recordToEvent: Flow[ConsumerRecord[String, EventCodeResponseDto], EventCodeResponseDto, NotUsed] = {
     Flow[ConsumerRecord[String, EventCodeResponseDto]].map(record => record.value())
   }
 
-  def toRateDto: Flow[TimeEvent, RateDto, NotUsed] = {
+  def toRateDto: Flow[ConsumerRecord[String, EventCodeResponseDto], RateDto, NotUsed] = {
     var eventCount = 0
     var startTime = LocalTime.now()
-    Flow.fromFunction[TimeEvent, RateDto] {
-      case _: TickEvent =>
-        val now = LocalTime.now()
-        val today = LocalDate.now()
-        val result = RateDto(
-          startTime.toEpochSecond(today, ZoneOffset.UTC),
-          now.toEpochSecond(today, ZoneOffset.UTC),
-          eventCount / 60
-        )
-        eventCount = 0
-        startTime = now
-        result
-      case _: VkEvent =>
-        eventCount += 1
-        null
-    }.filter(rate => rate != null)
+
+    def rateDto = {
+      val now = LocalTime.now()
+      val today = LocalDate.now()
+      val result = RateDto(
+        startTime.toEpochSecond(today, ZoneOffset.UTC),
+        now.toEpochSecond(today, ZoneOffset.UTC),
+        eventCount
+      )
+      eventCount = 0
+      startTime = now
+      result
+    }
+
+    Flow.fromSinkAndSource(Sink.foreach(_ => eventCount += 1),
+      Source.repeat(None).throttle(1, FiniteDuration(1, TimeUnit.MINUTES)).map(_ => rateDto))
   }
 
   def awsEventSink = {
@@ -57,10 +42,9 @@ object Processing {
     Sink.foreach[EventCodeResponseDto](snsTopicService.publish)
   }
 
-  def awsRateSink = {
-    // TODO: assign real arn
-    //    val snsTopicService = SnsTopicService[RateDto]("")
-    //    Sink.foreach[RateDto](snsTopicService.publish)
-    Sink.foreach[RateDto](println)
+  def consoleRateSink = {
+    Sink.foreach[RateDto] { rateDto =>
+      println(s"Events during last 60 seconds: ${rateDto.events}")
+    }
   }
 }

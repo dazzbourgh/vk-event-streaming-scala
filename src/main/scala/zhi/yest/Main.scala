@@ -4,11 +4,10 @@ import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ws.Message
 import akka.stream.SinkShape
-import akka.stream.scaladsl.{Broadcast, GraphDSL, Keep, Merge, Sink}
+import akka.stream.scaladsl.{Broadcast, GraphDSL, Keep, Sink}
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import zhi.yest.dto.{EventCodeResponseDto, TimeEvent}
-import zhi.yest.processing.Kafka
-import zhi.yest.processing.Processing._
+import zhi.yest.dto.EventCodeResponseDto
+import zhi.yest.processing.{Kafka, Processing}
 import zhi.yest.vk.methods.Streaming
 
 import scala.concurrent.Future
@@ -36,23 +35,17 @@ object Main {
   private def consumerSink = {
     GraphDSL.create() { implicit builder =>
       import GraphDSL.Implicits._
-      val FAN_OUT = builder.add(Broadcast[ConsumerRecord[String, EventCodeResponseDto]](2))
-      val FAN_IN = builder.add(Merge[TimeEvent](2))
+      val fanOut = builder.add(Broadcast[ConsumerRecord[String, EventCodeResponseDto]](2))
 
-      val TICK_SOURCE = builder.add(tickSource).out
-      val RECORD_TO_EVENT = builder.add(recordToEvent)
-      val TO_TIMER_TICK_EVENT = builder.add(toTimerTickEvent)
-      val TO_TIMER_VK_EVENT = builder.add(toTimerVkEvent)
-      val TO_RATE_DTO = builder.add(toRateDto)
-      val AWS_EVENT_SINK = builder.add(awsEventSink)
-      val AWS_RATE_SINK = builder.add(awsRateSink)
+      val toEvent = builder.add(Processing.recordToEvent)
+      val toRateDto = builder.add(Processing.toRateDto)
+      val awsEventSink = builder.add(Processing.awsEventSink)
+      val consoleRateSink = builder.add(Processing.consoleRateSink)
 
-      FAN_OUT.out(0) ~> TO_TIMER_VK_EVENT   ~> FAN_IN.in(0)
-      TICK_SOURCE    ~> TO_TIMER_TICK_EVENT ~> FAN_IN.in(1)
-                                               FAN_IN.out ~> TO_RATE_DTO ~> AWS_RATE_SINK
-      FAN_OUT.out(1) ~> RECORD_TO_EVENT     ~> AWS_EVENT_SINK
+      fanOut.out(0) ~> toRateDto ~> consoleRateSink
+      fanOut.out(1) ~> toEvent   ~> awsEventSink
 
-      SinkShape(FAN_OUT.in)
+      SinkShape(fanOut.in)
     }
   }
 
