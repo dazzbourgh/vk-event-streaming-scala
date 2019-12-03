@@ -47,10 +47,10 @@ object Main {
       val AWS_EVENT_SINK = builder.add(awsEventSink)
       val AWS_RATE_SINK = builder.add(awsRateSink)
 
-      FAN_OUT.out(0) ~> TO_TIMER_VK_EVENT ~> FAN_IN.in(0)
-      TICK_SOURCE ~> TO_TIMER_TICK_EVENT ~> FAN_IN.in(1)
-      FAN_IN.out ~> TO_RATE_DTO ~> AWS_RATE_SINK
-      FAN_OUT.out(1) ~> RECORD_TO_EVENT ~> AWS_EVENT_SINK
+      FAN_OUT.out(0) ~> TO_TIMER_VK_EVENT   ~> FAN_IN.in(0)
+      TICK_SOURCE    ~> TO_TIMER_TICK_EVENT ~> FAN_IN.in(1)
+                                               FAN_IN.out ~> TO_RATE_DTO ~> AWS_RATE_SINK
+      FAN_OUT.out(1) ~> RECORD_TO_EVENT     ~> AWS_EVENT_SINK
 
       SinkShape(FAN_OUT.in)
     }

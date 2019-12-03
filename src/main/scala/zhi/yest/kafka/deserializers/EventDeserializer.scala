@@ -14,7 +14,16 @@ class EventDeserializer extends Deserializer[EventCodeResponseDto] {
 
   override def deserialize(topic: String, data: Array[Byte]): EventCodeResponseDto = {
     val objectString = StringUtils.newString(data, "UTF-8")
-    new Gson().fromJson(objectString, classOf[EventCodeResponseDto])
+    try{
+      new Gson().fromJson(objectString, classOf[EventCodeResponseDto])
+    } catch {
+      case e: Throwable => handleException(e)
+    }
+  }
+
+  private def handleException(e: Throwable) = {
+    e.printStackTrace()
+    null
   }
 
   override def close(): Unit = {
