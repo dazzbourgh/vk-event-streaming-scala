@@ -20,9 +20,9 @@ object Main {
     val streaming = Streaming()
 
     val producerGraph = buildProducerGraph(Kafka.messageFlow.toMat(Kafka.sink)(Keep.right))(Sink.foreach(println))
-    val consumerClosedGraph = Kafka.source.to(consumerSink)
-
     val completeStreaming = streaming.openConnection(producerGraph)
+
+    val consumerClosedGraph = Kafka.source.to(consumerSink)
     consumerClosedGraph.run()
 
     println("Press any key to stop the program.")
