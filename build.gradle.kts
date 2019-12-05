@@ -39,6 +39,9 @@ tasks {
         manifest {
             attributes("Main-Class" to "zhi.yest.Main")
         }
+        transform(com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransformer::class.java) {
+            resource = "reference.conf"
+        }
     }
     build {
         dependsOn(shadowJar)
